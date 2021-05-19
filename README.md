@@ -25,7 +25,7 @@ Add the "RoundsModLoader.dll" reference to the assembly with the button shown he
 ![dnSpy preview](https://i.imgur.com/yhfza4E.png)
 
 # MDK Usage
-To create mods compatible with this mod-loader create a "Class Library (.NET Framework)" VS project, add RoundsModLoader.dll and RoundsMDK.dll as references. Then you'll create your mod's entry point.
+To create mods compatible with this mod-loader create a "Class Library (.NET Framework)" VS project, add RoundsModLoader.dll to references. Then you'll create your mod's entry point.
 
 For Example:
 
