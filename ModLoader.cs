@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Collections.Generic;
 using Photon.Pun;
 using HarmonyLib;
+using RoundsMDK;
 
 namespace RoundsModLoader
 {
@@ -136,24 +137,6 @@ namespace RoundsModLoader
         
         private static void InitializeMods(string[] paths)
         {
-            Type iModType = null;
-
-            foreach (var path in paths)
-            {
-                if (path.Contains("RoundsMDK"))
-                {
-                    var dll = Assembly.LoadFrom(path);
-                    foreach (var type in dll.GetExportedTypes())
-                    {
-                        if (iModType == null && type.Name == "IMod")
-                        {
-                            iModType = type;
-                            break;
-                        }
-                    }
-                }
-            }
-
             // Load mods
             int count = 0;
             foreach (var path in paths)
@@ -161,7 +144,7 @@ namespace RoundsModLoader
                 var dll = Assembly.LoadFrom(path);
                 foreach (var type in dll.GetExportedTypes())
                 {
-                    if (iModType.IsAssignableFrom(type) && type.Name != "IMod")
+                    if (typeof(IMod).IsAssignableFrom(type) && type.Name != "IMod")
                     {
                         var modEntryPoint = Activator.CreateInstance(type);
                         var method = type.GetMethod("Initialize");

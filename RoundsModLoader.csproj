@@ -283,6 +283,7 @@
     <Compile Include="ModLoader.cs" />
     <Compile Include="NetworkingManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RoundsMDK\IMod.cs" />
     <Compile Include="Utilities.cs" />
   </ItemGroup>
   <ItemGroup>
