@@ -50,6 +50,9 @@ namespace RoundsModLoader
         internal static CardInfo[] defaultCards;
         internal static List<CardInfo> moddedCards = new List<CardInfo>();
 
+        private static bool showModUi = false;
+        private static Dictionary<string, ModData> modData = new Dictionary<string, ModData>();
+
         struct NetworkEventType
         {
             public const string
@@ -126,8 +129,47 @@ namespace RoundsModLoader
             {
                 CardChoice.instance.cards = moddedCards.ToArray();
             }
+
+            if (Input.GetKeyDown(KeyCode.Keypad0))
+            {
+                showModUi = !showModUi;
+            }
+
+            GameManager.lockInput = showModUi;
         }
-        
+
+        void OnGUI()
+        {
+            if (!showModUi) return;
+
+            GUILayout.BeginVertical();
+
+            bool showingSpecificMod = false;
+            foreach (var md in modData.Keys)
+            {
+                var data = modData[md];
+                if (data.guiActive)
+                {
+                    if (GUILayout.Button("<- Back"))
+                    {
+                        data.guiActive = false;
+                    }
+                    showingSpecificMod = true;
+                    data.onGUI?.Invoke();
+                    break;
+                }
+            }
+
+            if (showingSpecificMod) return;
+
+            foreach (var md in modData.Keys)
+            {
+                var data = modData[md];
+                data.guiActive = GUILayout.Toggle(data.guiActive, $"{data.name} Options");
+            }
+            GUILayout.EndVertical();
+        }
+
         public static void BuildInfoPopup(string message)
         {
             var popup = new GameObject("Info Popup").AddComponent<InfoPopup>();
@@ -146,10 +188,13 @@ namespace RoundsModLoader
                 {
                     if (typeof(IMod).IsAssignableFrom(type) && type.Name != "IMod")
                     {
-                        var modEntryPoint = Activator.CreateInstance(type);
-                        var method = type.GetMethod("Initialize");
-                        string result = (string)method.Invoke(modEntryPoint, null);
+                        //var method = type.GetMethod("Initialize");
+                        //string result = (string)method.Invoke(modEntryPoint, null);
+                        var modEntryPoint = (IMod)Activator.CreateInstance(type);
+                        var result = modEntryPoint.Initialize();
 
+                        modData.Add(result, new ModData(result, modEntryPoint.OnGUI));
+                        
                         Instance.ExecuteAfterSeconds(count / 3f, () =>
                         {
                             BuildInfoPopup(result);
@@ -158,6 +203,21 @@ namespace RoundsModLoader
                         count++;
                     }
                 }
+            }
+        }
+
+        private class ModData
+        {
+            public bool guiActive = false;
+            public string name;
+            public OnGUI onGUI;
+
+            public delegate void OnGUI();
+
+            public ModData(string name, OnGUI onGUI)
+            {
+                this.name = name;
+                this.onGUI = onGUI;
             }
         }
     }

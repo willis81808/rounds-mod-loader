@@ -9,5 +9,6 @@ namespace RoundsMDK
     public interface IMod
     {
         string Initialize();
+        void OnGUI();
     }
 }
