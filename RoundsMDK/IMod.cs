@@ -9,6 +9,17 @@ namespace RoundsMDK
     public interface IMod
     {
         string Initialize();
+    }
+
+    public interface IGui
+    {
         void OnGUI();
+    }
+
+    public interface INetworked
+    {
+        void OnJoinRoom();
+        void OnLeftRoom();
+        void OnHandShakeCompleted();
     }
 }

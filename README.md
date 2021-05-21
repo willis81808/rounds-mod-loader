@@ -7,11 +7,12 @@ This is a **simple** mod loader for Rounds. It includes a basic wrapper for cust
  - Manually modifying the game's Assembly-CSharp.dll to inject the mod-loader
 
 # Installation
- 1. Download the mod-loader files from [releases](https://github.com/willis81808/rounds-mod-loader/releases)
- 2. Extract the files directly into the ROUNDS install folder
+ 1. Download the mod-loader from [releases](https://github.com/willis81808/rounds-mod-loader/releases)
+ 2. Extract the RoundsModLoader.dll into "ROUNDS\Rounds_Data\Managed"
  3. Download HarmonyLib (link above)
  4. Extract 0Harmony.dll (.NET 4.5 version) into "ROUNDS\Rounds_Data\Managed"
- 5. Drop any mods into the mods folder "ROUNDS\Rounds_Data\Mods"
+ 5. If the folder doesn't already exist, create a folder titled "Mods" in "ROUNDS\Rounds_Data"
+ 5. Drop any mods into the mods folder
  6. Finally, manually patch the Assembly-CSharp.dll file (I recommend using dnSpy) as follows:
 
 Inject the following code-snippet into the "Update" method of the "PlayerManager" class.

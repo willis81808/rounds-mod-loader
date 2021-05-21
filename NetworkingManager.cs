@@ -27,7 +27,6 @@ namespace RoundsModLoader
         };
 
         public delegate void PhotonEvent(object[] objects);
-        //private static Dictionary<byte, PhotonEvent> events = new Dictionary<byte, PhotonEvent>();
         private static Dictionary<string, PhotonEvent> events = new Dictionary<string, PhotonEvent>();
 
         private static byte ModEventCode = 69;
@@ -36,18 +35,7 @@ namespace RoundsModLoader
         {
             PhotonNetwork.NetworkingClient.EventReceived += OnEvent;
         }
-
-        //public static void RegisterEvent(byte eventCode, PhotonEvent handler)
-        //{
-        //    if (events.ContainsKey(eventCode))
-        //    {
-        //        throw new Exception($"An event handler is already registered with the event code: {eventCode}");
-        //    }
-        //    else
-        //    {
-        //        events.Add(eventCode, handler);
-        //    }
-        //}
+        
         public static void RegisterEvent(string eventName, PhotonEvent handler)
         {
             if (events.ContainsKey(eventName))
@@ -57,16 +45,9 @@ namespace RoundsModLoader
 
             events.Add(eventName, handler);
         }
-        //public static void RaiseEvent(byte eventCode, params object[] data)
-        //{
-        //    PhotonNetwork.RaiseEvent(eventCode, data, raiseEventOptionsAll, sendOptions);
-        //}
-        //public static void RaiseEventOthers(byte eventCode, params object[] data)
-        //{
-        //    PhotonNetwork.RaiseEvent(eventCode, data, raiseEventOptionsOthers, sendOptions);
-        //}
         public static void RaiseEvent(string eventName, params object[] data)
         {
+            if (data == null) data = new object[0];
             var allData = new List<object>();
             allData.Add(eventName);
             allData.AddRange(data);
@@ -74,6 +55,7 @@ namespace RoundsModLoader
         }
         public static void RaiseEventOthers(string eventName, params object[] data)
         {
+            if (data == null) data = new object[0];
             var allData = new List<object>();
             allData.Add(eventName);
             allData.AddRange(data);
@@ -106,19 +88,6 @@ namespace RoundsModLoader
             {
                 ModLoader.BuildInfoPopup(e.ToString());
             }
-
-            //try
-            //{
-            //    PhotonEvent handler;
-            //    if (events.TryGetValue(photonEvent.Code, out handler))
-            //    {
-            //        handler?.Invoke(data);
-            //    }
-            //}
-            //catch (Exception e)
-            //{
-            //    ModLoader.BuildInfoPopup(e.ToString());
-            //}
         }
     }
 }

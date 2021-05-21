@@ -51,7 +51,7 @@ namespace RoundsModLoader
         internal static List<CardInfo> moddedCards = new List<CardInfo>();
 
         private static bool showModUi = false;
-        private static Dictionary<string, ModData> modData = new Dictionary<string, ModData>();
+        private static Dictionary<string, ModWrapper> modData = new Dictionary<string, ModWrapper>();
 
         struct NetworkEventType
         {
@@ -98,10 +98,20 @@ namespace RoundsModLoader
         {
             BuildInfoPopup("Mod handshake requested");
             NetworkingManager.RaiseEventOthers(NetworkEventType.StartHandshake);
+
+            foreach (var mod in modData.Values)
+            {
+                mod.onJoinedRoom?.Invoke();
+                mod.handshake?.Invoke();
+            }
         }
         public override void OnLeftRoom()
         {
             CardChoice.instance.cards = defaultCards;
+            foreach (var mod in modData.Values)
+            {
+                mod.onLeftRoom?.Invoke();
+            }
         }
 
         void Awake()
@@ -165,7 +175,8 @@ namespace RoundsModLoader
             foreach (var md in modData.Keys)
             {
                 var data = modData[md];
-                data.guiActive = GUILayout.Toggle(data.guiActive, $"{data.name} Options");
+                if (data.onGUI != null)
+                    data.guiActive = GUILayout.Toggle(data.guiActive, $"{data.modId} Options");
             }
             GUILayout.EndVertical();
         }
@@ -188,16 +199,48 @@ namespace RoundsModLoader
                 {
                     if (typeof(IMod).IsAssignableFrom(type) && type.Name != "IMod")
                     {
-                        //var method = type.GetMethod("Initialize");
-                        //string result = (string)method.Invoke(modEntryPoint, null);
-                        var modEntryPoint = (IMod)Activator.CreateInstance(type);
-                        var result = modEntryPoint.Initialize();
+                        var obj = Activator.CreateInstance(type);
+                        var modEntryPoint = (IMod)obj;
+                        var modId = modEntryPoint.Initialize();
 
-                        modData.Add(result, new ModData(result, modEntryPoint.OnGUI));
-                        
+                        var modWrapper = new ModWrapper(modId, modEntryPoint);
+
+                        // set up mod GUI
+                        if (obj is IGui)
+                        {
+                            // hook GUI function to wrapper
+                            var modGUI = (IGui)obj;
+                            modWrapper.onGUI = modGUI.OnGUI;
+                        }
+
+                        // set up mod Networking
+                        if (obj is INetworked)
+                        {
+                            var modNetworked = (INetworked)obj;
+
+                            // register mod handshake network events
+                            NetworkingManager.RegisterEvent($"ModLoader_{modId}_StartHandshake", (e) =>
+                            {
+                                NetworkingManager.RaiseEvent($"ModLoader_{modId}_FinishHandshake");
+                            });
+                            NetworkingManager.RegisterEvent($"ModLoader_{modId}_FinishHandshake", (e) =>
+                            {
+                                modNetworked.OnHandShakeCompleted();
+                            });
+                            // hook mod network functions to wrapper
+                            modWrapper.onJoinedRoom = modNetworked.OnJoinRoom;
+                            modWrapper.onLeftRoom = modNetworked.OnLeftRoom;
+                            modWrapper.handshake = () =>
+                            {
+                                NetworkingManager.RaiseEventOthers($"ModLoader_{modId}_StartHandshake");
+                            };
+                        }
+
+                        modData.Add(modId, modWrapper);
+
                         Instance.ExecuteAfterSeconds(count / 3f, () =>
                         {
-                            BuildInfoPopup(result);
+                            BuildInfoPopup(modId);
                         });
 
                         count++;
@@ -206,18 +249,19 @@ namespace RoundsModLoader
             }
         }
 
-        private class ModData
+        private class ModWrapper
         {
             public bool guiActive = false;
-            public string name;
-            public OnGUI onGUI;
+            public string modId;
+            public IMod mod;
+            
+            public delegate void ModEvent();
+            public ModEvent handshake, onJoinedRoom, onLeftRoom, onGUI;
 
-            public delegate void OnGUI();
-
-            public ModData(string name, OnGUI onGUI)
+            public ModWrapper(string name, IMod modBase)
             {
-                this.name = name;
-                this.onGUI = onGUI;
+                this.modId = name;
+                this.mod = modBase;
             }
         }
     }
